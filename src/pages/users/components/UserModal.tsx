@@ -5,6 +5,8 @@ import { Modal, Button, Form, Input } from 'antd';
 export const UserModal = (props) => {
   const [form] = Form.useForm();
 
+  //报错：Cannot update a component (`FormItem`) while rendering a different component (`UserModal`). 
+  // 在compoentDidMount阶段才把值给他
   useEffect(() => {
     form.setFieldsValue(props.record);
   }, [props.visible])  //数组里内容变化时，执行箭头函数里代码

@@ -10,7 +10,7 @@ const index = ({ users, dispatch }) => {      //这里要传users
 
   function editHandeler(record) {
     setModalVisble(true);
-    setRecord(record)
+    setRecord(record)        //赋值record(原来是undefined)
   }
 
 
@@ -19,12 +19,14 @@ const index = ({ users, dispatch }) => {      //这里要传users
   };
 
   const onFinish = (values: any) => {
+    //编辑时要知道id,从record中取得
     const id = record.id
     //console.log('Success:', values);
     //页面与service建立链接，通过dispatch到Effect再通过call到service,然后走Reducer返回到页面中
     dispatch({
       // 页面中dispatch要type加路径前缀
       type: "users/edit",
+      //payload传id和values给model
       payload: {
         id,
         values
@@ -53,10 +55,10 @@ const index = ({ users, dispatch }) => {      //这里要传users
     {
       title: 'Action',
       key: 'action',
-      render: (text, record) => (
+      render: (text, record) => (   //record就是当前行数据
         <Space size="middle">
           <a onClick={(() => {
-            editHandeler(record)
+            editHandeler(record)    //点击时要吧record传递出去，写成箭头函数形式
           })}>Edit</a>
           <a>Delete</a>
         </Space>
@@ -81,7 +83,7 @@ const index = ({ users, dispatch }) => {      //这里要传users
 //   }
 // }
 
-export default connect(({ users }) => {  //此处users对应model里的namespace
+export default connect(({ users }) => {  //此处一定解构出users对应model里的namespace
   return {
     users
   }
