@@ -1,16 +1,30 @@
-import React, { useEffect } from 'react'
-import { Modal, Button, Form, Input } from 'antd';
+import React, { useEffect,FC } from 'react'
+import { Modal, Form, Input } from 'antd';
+import { singleUserData,FormValues } from "../data.d"
+
+interface UserModalProps {
+  visible: boolean,
+  closeHandler: () => void,
+  record: singleUserData | undefined,
+  onFinish: (valuues: FormValues) => void
+}
 
 
-export const UserModal = (props) => {
+export const UserModal:FC<UserModalProps> = (props) => {
   const [form] = Form.useForm();
 
   //报错：Cannot update a component (`FormItem`) while rendering a different component (`UserModal`). 
   // 在compoentDidMount阶段才把值给他
   useEffect(() => {
-    form.setFieldsValue(props.record);
+    //添加时record没有值要reset
+    if (props.record === undefined) {
+      form.resetFields()
+    } else {
+      form.setFieldsValue(props.record);
+    }
   }, [props.visible])  //数组里内容变化时，执行箭头函数里代码
 
+  //modal与form两个单独组件，之间要建立连接。Modal 的确认按钮在 Form 之外，通过 form.submit 方法调用表单提交功能。
   const onOk = () => {
     form.submit();
   }

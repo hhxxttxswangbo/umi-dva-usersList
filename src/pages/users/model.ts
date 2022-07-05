@@ -1,17 +1,29 @@
 //仓库文件
 //model是一个对象
 import { Reducer, Effect, Subscription } from 'umi'
-import { getRemoteList, editRecord } from './service'
+import { getRemoteList, editRecord, addRecord } from './service'
+import {singleUserData} from "./data.d"
+
+// 数据格式看接口文档
+export interface UserState {
+  data: singleUserData[],
+  meta: {
+    total: number,
+    per_page: number,
+    page: number
+  }
+}
 
 interface UserModelType {
   namespace: "users",
-  state: {},  //Table的dataSource只认识 “数组或者undefined”，因此dataSource={users.data}
+  state: UserState,  //Table的dataSource只认识 “数组或者undefined”，因此dataSource={users.data}
   reducers: {
-    getList: Reducer
+    getList: Reducer<UserState>     //Reducer的泛型<UserState>
   },
   effects: {
     getRemote: Effect,
-    edit: Effect
+    edit: Effect,
+    add: Effect
   },
   subscriptions: {
     setup: Subscription
@@ -20,7 +32,14 @@ interface UserModelType {
 
 const UserModel: UserModelType = {
   namespace: "users",  //该model唯一标识
-  state: {},            //仓库初始值
+  state: {             //仓库初始值
+    data: [],
+    meta: {
+      total: 0,
+      per_page: 5,
+      page: 1
+    }
+  },           
   reducers: {
     getList(state, { payload }) {  //action里解构出payload
       return payload;
@@ -43,6 +62,17 @@ const UserModel: UserModelType = {
       //注意call的传参方式，逗号后面写参数
       const data = yield call(editRecord, { id, values })
       // console.log(data);
+
+      // 页面自动刷新，调用getRemote
+      yield put({
+        type: "getRemote"
+      })
+    },
+    * add({ payload: { values } }, { put, call }) {
+      const data = yield call(addRecord, { values })
+      yield put({
+        type: "getRemote"
+      })
     }
   },
 

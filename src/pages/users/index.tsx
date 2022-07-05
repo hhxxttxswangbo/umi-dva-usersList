@@ -1,14 +1,21 @@
-import React, { useState } from 'react'
-import { Table, Tag, Space } from 'antd';
-import { connect } from "umi"
+import React, { useState, FC } from 'react'
+import { Table, Space, Button } from 'antd';
+import { connect, Dispatch, Loading, UserState } from 'umi'
 import { UserModal } from "./components/UserModal"
+import {singleUserData,FormValues} from "./data.d"
 
-const index = ({ users, dispatch }) => {      //这里要传users
+interface UserPageProps {
+  users: UserState,
+  dispatch: Dispatch,
+  userListLoading: boolean
+}
+
+const UserListPage:FC<UserPageProps> = ({ users, dispatch, userListLoading }) => {      //这里要传users
   const [modalVisble, setModalVisble] = useState(false);
-  const [record, setRecord] = useState(undefined);
+  const [record, setRecord] = useState<singleUserData|undefined>(undefined);
 
 
-  function editHandeler(record) {
+  function editHandeler(record:singleUserData) {
     setModalVisble(true);
     setRecord(record)        //赋值record(原来是undefined)
   }
@@ -18,21 +25,48 @@ const index = ({ users, dispatch }) => {      //这里要传users
     setModalVisble(false);
   };
 
-  const onFinish = (values: any) => {
-    //编辑时要知道id,从record中取得
-    const id = record.id
-    //console.log('Success:', values);
-    //页面与service建立链接，通过dispatch到Effect再通过call到service,然后走Reducer返回到页面中
-    dispatch({
-      // 页面中dispatch要type加路径前缀
-      type: "users/edit",
-      //payload传id和values给model
-      payload: {
-        id,
-        values
-      }
-    })
+
+  const onFinish = (values:FormValues) => {
+    let id = 0;
+    if (record) {
+      //编辑时要知道id,从record中取得
+      id = record.id
+      //console.log('Success:', values);
+    }
+
+    if (id) {
+      //页面修改了数据，数据存在页面里，页面要与service建立链接，通过dispatch到Effect再通过call到service,然后走Reducer返回到页面中
+      dispatch({
+        // 页面中dispatch要type加路径前缀
+        type: "users/edit",
+        //payload传id和values给model
+        payload: {
+          id,
+          values
+        }
+      })
+
+    } else {
+      dispatch({
+        // 页面中dispatch要type加路径前缀
+        type: "users/add",
+        //payload传id和values给model
+        payload: {
+          values
+        }
+      })
+    }
+    setModalVisble(false)
+
+
+
   };
+
+  function addHandler() {
+    setModalVisble(true);
+    //添加时record清空
+    setRecord(undefined)
+  }
 
   const columns = [
     {
@@ -44,7 +78,7 @@ const index = ({ users, dispatch }) => {      //这里要传users
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: text => <a>{text}</a>,
+      render: (text:string) => <a>{text}</a>,
     },
 
     {
@@ -55,7 +89,7 @@ const index = ({ users, dispatch }) => {      //这里要传users
     {
       title: 'Action',
       key: 'action',
-      render: (text, record) => (   //record就是当前行数据
+      render: (text:string, record:singleUserData) => (   //record就是当前行数据
         <Space size="middle">
           <a onClick={(() => {
             editHandeler(record)    //点击时要吧record传递出去，写成箭头函数形式
@@ -69,9 +103,10 @@ const index = ({ users, dispatch }) => {      //这里要传users
 
   return (
     <div className="list-table">
+      <Button type="primary" onClick={addHandler}>Add Button</Button>
       {/* 因为connect里return的users 所以dataSource={users} */}
       {/* 由于后端返回的数据是一个对象，对象里面有一个data，是我们要的数据源，所以dataSource={users.data} */}
-      <Table columns={columns} dataSource={users.data} rowKey="id" />
+      <Table columns={columns} dataSource={users.data} rowKey="id" loading={userListLoading} />
       <UserModal visible={modalVisble} closeHandler={closeModal} record={record} onFinish={onFinish} />
     </div>
   )
@@ -83,9 +118,11 @@ const index = ({ users, dispatch }) => {      //这里要传users
 //   }
 // }
 
-export default connect(({ users }) => {  //此处一定解构出users对应model里的namespace
+export default connect(({ users, loading }: { users: UserState, loading: Loading }) => {  //此处一定解构出users对应model里的namespace
+  // console.log(loading);   load为加载时转圈效果
   return {
-    users
+    users,
+    userListLoading: loading.models.users
   }
-})(index)
+})(UserListPage)
 
